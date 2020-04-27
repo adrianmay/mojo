@@ -6,6 +6,15 @@ import sys
 import subprocess
 import os
 
+YOUNG=-1
+IDLE=0
+CURIOUS=1
+ALARMED=2
+ANNOYED=4
+
+state = YOUNG
+fnum = 0
+
 def main():
 
     cam = os.environ['CAM']
@@ -21,13 +30,10 @@ def main():
     fps = 0
     meanfps = 1.0 # guess this for your cam
 
-    outname = "/out/mojo.avi"
-    codec = cv2.VideoWriter_fourcc(*'MPEG')
-    output = cv2.VideoWriter(outname, cv2.CAP_FFMPEG, codec, meanfps, (width,height))
+    wantframes=30
+    fnum=1
 
-    wantframes=10
-
-    while(wantframes>0):
+    while(wantframes>fnum):
         hasframes, frame = cap.read()
         if(not hasframes):
             continue
@@ -35,11 +41,12 @@ def main():
             continue
         elif(np.sum(frame) == 0):
             continue
-        else: 
-            wantframes=wantframes-1
-            output.write(frame)
 
-    output.release()
+        fnum=fnum+1
+        cv2.imwrite("/out/still_{0}.jpg".format(fnum), frame)
+        # Then stitch them together with ffmpeg -framerate 1 -start_number 1 -i still_%d.jpg -vcodec libx264 -b 800k test.avi
+        # if( (cv2.waitKey(1) & 0xFF) == ord('q') ):
+        #    break
 
 if __name__ == '__main__':
     main()
